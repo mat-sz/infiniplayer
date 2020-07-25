@@ -36,6 +36,7 @@ async function play(id: string) {
 
             play(content.related[0].id);
           });
+        return;
       }
     }
   }
