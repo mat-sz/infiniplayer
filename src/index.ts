@@ -1,26 +1,66 @@
 #!/usr/bin/env node
 import { YouTube, ContentStreamType } from 'media-api';
-import { ReadStream } from 'fs';
 import commandLineArgs from 'command-line-args';
 import Speaker from 'speaker';
 import ffmpeg from 'fluent-ffmpeg';
-import fetch from 'node-fetch';
+import blessed from 'blessed';
+
+const screen = blessed.screen({
+  smartCSR: true,
+  title: 'inifniplayer',
+});
+
+const box = blessed.box({
+  top: 'center',
+  left: 'center',
+  width: '50%',
+  height: '50%',
+  content: 'Not playing',
+  align: 'center',
+  valign: 'middle',
+  tags: true,
+  border: {
+    type: 'line',
+  },
+  style: {
+    fg: 'white',
+    border: {
+      fg: '#f0f0f0',
+    },
+  },
+});
+screen.append(box);
+
+const title = blessed.text({
+  top: 0,
+  left: 'center',
+  content: 'infiniplayer',
+});
+screen.append(title);
+
+screen.render();
 
 const optionDefinitions = [
   { name: 'id', type: String, multiple: false, defaultOption: true },
 ];
 
+function onTrackChanged(title: string) {
+  screen.title = title + ' - infiniplayer';
+  box.setContent(title);
+  screen.render();
+}
+
 async function play(id: string) {
   const youtube = new YouTube();
   const content = await youtube.content(id);
   if (!content) {
-    console.log('Playback failure.');
+    box.setContent('Playback failure.');
     return;
   }
 
   const onFinish = () => {
     if (!content.related?.[0]) {
-      console.log('Ran out of music...');
+      box.setContent('Ran out of music...');
       return;
     }
 
@@ -28,7 +68,7 @@ async function play(id: string) {
   };
 
   if (content?.streams) {
-    console.log('Playing: ' + content.title);
+    onTrackChanged(content.title);
     for (let stream of content.streams.sort(
       (a, b) => (b.bitrate || 0) - (a.bitrate || 0)
     )) {
