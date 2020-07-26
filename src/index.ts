@@ -18,6 +18,15 @@ async function play(id: string) {
     return;
   }
 
+  const onFinish = () => {
+    if (!content.related?.[0]) {
+      console.log('Ran out of music...');
+      return;
+    }
+
+    play(content.related[0].id);
+  };
+
   if (content?.streams) {
     console.log('Playing: ' + content.title);
     for (let stream of content.streams.sort(
@@ -28,14 +37,7 @@ async function play(id: string) {
           .addOption('-ar', '44100')
           .toFormat('s16le')
           .pipe(new Speaker())
-          .on('end', () => {
-            if (!content.related?.[0]) {
-              console.log('Ran out of music...');
-              return;
-            }
-
-            play(content.related[0].id);
-          });
+          .on('finish', onFinish);
         return;
       }
     }
