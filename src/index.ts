@@ -24,8 +24,8 @@ async function play(id: string) {
       (a, b) => (b.bitrate || 0) - (a.bitrate || 0)
     )) {
       if (stream.type === ContentStreamType.AUDIO) {
-        const res = await fetch(stream.url);
-        ffmpeg(res.body as ReadStream)
+        ffmpeg(stream.url)
+          .addOption('-ar', '44100')
           .toFormat('s16le')
           .pipe(new Speaker())
           .on('end', () => {
