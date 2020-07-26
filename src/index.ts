@@ -16,6 +16,7 @@ const box = blessed.box({
   width: '50%',
   height: '50%',
   content: 'Not playing',
+  label: 'infiniplayer',
   align: 'center',
   valign: 'middle',
   tags: true,
@@ -30,13 +31,6 @@ const box = blessed.box({
   },
 });
 screen.append(box);
-
-const title = blessed.text({
-  top: 0,
-  left: 'center',
-  content: 'infiniplayer',
-});
-screen.append(title);
 
 screen.render();
 
