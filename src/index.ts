@@ -39,9 +39,11 @@ const optionDefinitions = [
   { name: 'id', type: String, multiple: false, defaultOption: true },
 ];
 
-function onTrackChanged(title: string) {
+function onTrackChanged(title: string, nextTitle?: string) {
   screen.title = title + ' - infiniplayer';
-  box.setContent(title);
+  box.setContent(
+    'Currently playing: ' + title + '\nNext up: ' + (nextTitle || 'nothing')
+  );
   screen.render();
 }
 
@@ -53,17 +55,19 @@ async function play(id: string) {
     return;
   }
 
+  const next = content.related?.[0];
+
   const onFinish = () => {
-    if (!content.related?.[0]) {
+    if (!next) {
       box.setContent('Ran out of music...');
       return;
     }
 
-    play(content.related[0].id);
+    play(next.id);
   };
 
   if (content?.streams) {
-    onTrackChanged(content.title);
+    onTrackChanged(content.title, next?.title);
     for (let stream of content.streams.sort(
       (a, b) => (b.bitrate || 0) - (a.bitrate || 0)
     )) {
