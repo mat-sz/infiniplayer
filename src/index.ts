@@ -5,45 +5,39 @@ import Speaker from 'speaker';
 import ffmpeg from 'fluent-ffmpeg';
 import blessed from 'blessed';
 
-const screen = blessed.screen({
-  smartCSR: true,
-  title: 'inifniplayer',
-  fullUnicode: true,
-});
+let screen: blessed.Widgets.Screen | undefined;
+let box: blessed.Widgets.BoxElement | undefined;
 
-const box = blessed.box({
-  top: 'center',
-  left: 'center',
-  width: '50%',
-  height: '50%',
-  content: 'Not playing',
-  label: 'infiniplayer',
-  align: 'center',
-  valign: 'middle',
-  tags: true,
-  border: {
-    type: 'line',
-  },
-  style: {
-    fg: 'white',
-    border: {
-      fg: '#f0f0f0',
-    },
-  },
-});
-screen.append(box);
-
-screen.render();
-
-const optionDefinitions = [
+const optionDefinitions: commandLineArgs.OptionDefinition[] = [
   { name: 'id', type: String, multiple: true, defaultOption: true },
+  {
+    name: 'noInterface',
+    type: Boolean,
+    multiple: false,
+    defaultOption: false,
+    alias: 'n',
+    defaultValue: false,
+  },
 ];
 
 function onTrackChanged(title: string, nextTitle?: string) {
+  if (!screen || !box) {
+    return;
+  }
+
   screen.title = title + ' - infiniplayer';
   box.setContent(
     'Currently playing: ' + title + '\nNext up: ' + (nextTitle || 'nothing')
   );
+  screen.render();
+}
+
+function onError(message: string) {
+  if (!screen || !box) {
+    return;
+  }
+
+  box.setContent(message);
   screen.render();
 }
 
@@ -69,7 +63,7 @@ async function play(id: string) {
   }
 
   if (!content) {
-    box.setContent('Playback failure.');
+    onError('Playback failure.');
     return;
   }
 
@@ -77,7 +71,7 @@ async function play(id: string) {
 
   const onFinish = () => {
     if (!next) {
-      box.setContent('Ran out of music...');
+      onError('Ran out of music...');
       return;
     }
 
@@ -101,5 +95,39 @@ async function play(id: string) {
   }
 }
 
-const options: { id: string[] } = commandLineArgs(optionDefinitions) as any;
+const options: { id: string[]; noInterface: boolean } = commandLineArgs(
+  optionDefinitions
+) as any;
 play(options.id.join(' '));
+
+if (!options.noInterface) {
+  screen = blessed.screen({
+    smartCSR: true,
+    title: 'inifniplayer',
+    fullUnicode: true,
+  });
+
+  box = blessed.box({
+    top: 'center',
+    left: 'center',
+    width: '50%',
+    height: '50%',
+    content: 'Not playing',
+    label: 'infiniplayer',
+    align: 'center',
+    valign: 'middle',
+    tags: true,
+    border: {
+      type: 'line',
+    },
+    style: {
+      fg: 'white',
+      border: {
+        fg: '#f0f0f0',
+      },
+    },
+  });
+
+  screen.append(box);
+  screen.render();
+}
