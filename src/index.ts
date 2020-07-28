@@ -8,6 +8,7 @@ import blessed from 'blessed';
 const screen = blessed.screen({
   smartCSR: true,
   title: 'inifniplayer',
+  fullUnicode: true,
 });
 
 const box = blessed.box({
