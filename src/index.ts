@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { YouTube, ContentStreamType } from 'media-api';
+import { YouTube, ContentStreamType, Content } from 'media-api';
 import commandLineArgs from 'command-line-args';
 import Speaker from 'speaker';
 import ffmpeg from 'fluent-ffmpeg';
@@ -36,7 +36,7 @@ screen.append(box);
 screen.render();
 
 const optionDefinitions = [
-  { name: 'id', type: String, multiple: false, defaultOption: true },
+  { name: 'id', type: String, multiple: true, defaultOption: true },
 ];
 
 function onTrackChanged(title: string, nextTitle?: string) {
@@ -49,7 +49,25 @@ function onTrackChanged(title: string, nextTitle?: string) {
 
 async function play(id: string) {
   const youtube = new YouTube();
-  const content = await youtube.content(id);
+  let content: Content | undefined = undefined;
+
+  if (id.includes(' ')) {
+    content = (await youtube.search(id)).contents?.[0];
+  } else {
+    try {
+      content = await youtube.content(id);
+    } catch {}
+
+    if (!content) {
+      content = (await youtube.search(id)).contents?.[0];
+    }
+  }
+
+  // Search results don't include streams.
+  if (content?.id && !content?.streams) {
+    content = await youtube.content(content.id);
+  }
+
   if (!content) {
     box.setContent('Playback failure.');
     return;
@@ -83,5 +101,5 @@ async function play(id: string) {
   }
 }
 
-const options: { id: string } = commandLineArgs(optionDefinitions) as any;
-play(options.id);
+const options: { id: string[] } = commandLineArgs(optionDefinitions) as any;
+play(options.id.join(' '));
